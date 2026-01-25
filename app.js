@@ -484,7 +484,7 @@ function calculate(getDays, year, month1to12) {
       taps = 0;
       toast("🐬 yunusgpt modu: Ay sonu bonus takibi açıldı. 1000 pakette sürpriz var 😄");
       document.body.style.filter = "hue-rotate(25deg)";
-      setTimeout(() => (document.body.style.filter = ""), 6000);
+      setTimeout(() => (document.body.style.filter = ""), 1200);
     }
   });
 })();
