@@ -478,7 +478,7 @@ function calculate(getDays, year, month1to12) {
   title.addEventListener("click", () => {
     taps++;
     clearTimeout(timer);
-    timer = setTimeout(() => taps = 0, 1200);
+    timer = setTimeout(() => taps = 0, 6000);
 
     if (taps === 7) {
       taps = 0;
