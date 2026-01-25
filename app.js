@@ -362,7 +362,7 @@ function calculate(getDays, year, month1to12) {
 
     if (taps === 7) {
       taps = 0;
-      toast("🐬 yunusgpt modu aktif: bonuslar çifter yazılmadı 😄");
+      toast("🐬 yunusgpt modu aktif – paket canavarı 🐺");
       document.body.style.filter = "hue-rotate(25deg)";
       setTimeout(() => (document.body.style.filter = ""), 1200);
     }
