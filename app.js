@@ -1,3 +1,4 @@
+alert("app.js yüklendi ✅");
 const $ = (id) => document.getElementById(id);
 
 function parseTrNumber(s) {
