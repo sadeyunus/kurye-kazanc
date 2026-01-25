@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Kurye Kazanç Hesaplayıcı</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 0; background:#0b1220; color:#e5e7eb; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+    .card { background:#111827; border:1px solid #243044; border-radius:16px; padding:14px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row > * { flex:1; min-width: 180px; }
+    label { display:block; margin:10px 0 6px; color:#cbd5e1; font-size:14px; }
+    input, select { width:100%; padding:11px; border-radius:12px; border:1px solid #334155; background:#0f172a; color:#e5e7eb; font-size:16px; }
+    button { width:100%; margin-top:12px; padding:12px; border-radius:12px; border:0; background:#22c55e; font-weight:800; font-size:16px; }
+    .muted { color:#94a3b8; font-size:12px; margin-top:8px; }
+    .grid { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+    .day { display:grid; grid-template-columns: 68px 1.1fr 1fr 1fr; gap:8px; align-items:center;
+           background:#0f172a; border:1px solid #233046; border-radius:14px; padding:10px; }
+    .day b { color:#e5e7eb; }
+    .day small { color:#94a3b8; }
+    @media (max-width: 640px){
+      .day { grid-template-columns: 56px 1fr; grid-auto-rows:auto; }
+      .day .c2, .day .c3 { grid-column: 1 / -1; }
+    }
+    .summary { margin-top:12px; padding:12px; border-radius:14px; background:#0f172a; border:1px dashed #334155; }
+    .summary .k { color:#94a3b8; }
+    .err { color:#fca5a5; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Kurye Kazanç Hesaplayıcı (PWA)</h2>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Ay</label>
+          <input id="month" type="month" />
+          <div class="muted">Ay seçince gün listesi otomatik oluşur.</div>
+        </div>
+        <div>
+          <label>Aylık Sabit Ücret (TL)</label>
+          <input id="fixedMonthly" inputmode="decimal" />
+          <div class="muted">Varsayılan: 55.223</div>
+        </div>
+        <div>
+          <label>KM Desteği (opsiyonel)</label>
+          <select id="kmMode">
+            <option value="off">Kapalı</option>
+            <option value="on">Açık (günlük gir)</option>
+          </select>
+          <div class="muted">İstersen her güne 0 / 25 / 35 ekletiriz.</div>
+        </div>
+      </div>
+
+      <button id="calc">Hesapla</button>
+      <div id="error" class="err" style="display:none;"></div>
+
+      <div class="summary">
+        <div><span class="k">Çalışılan gün:</span> <b id="workDays">0</b> — <span class="k">İzin:</span> <b id="offDays">0</b> — <span class="k">Ücretsiz:</span> <b id="unpaidDays">0</b></div>
+        <div><span class="k">Toplam paket:</span> <b id="totalPk">0</b></div>
+        <hr style="border:0;border-top:1px solid #233046; margin:10px 0;">
+        <div><span class="k">Sabit toplam:</span> <b id="fixedSum">-</b></div>
+        <div><span class="k">Günlük paket primi:</span> <b id="dailyBonusSum">-</b></div>
+        <div><span class="k">KM desteği:</span> <b id="kmSum">-</b></div>
+        <div><span class="k">Aylık bonus:</span> <b id="monthlyBonus">-</b></div>
+        <hr style="border:0;border-top:1px solid #233046; margin:10px 0;">
+        <div style="font-size:18px;"><span class="k">GENEL TOPLAM:</span> <b id="grand">-</b></div>
+      </div>
+
+      <div class="grid" id="days"></div>
+      <div class="muted">Not: “İzin” günü sabit ücret var, paket primi yok. Offline çalışır, otomatik kaydeder.</div>
+    </div>
+
+    <p class="muted">Kurulum: Tarayıcı menüsü → “Ana ekrana ekle”. (HTTPS gerekir)</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
