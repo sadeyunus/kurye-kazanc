@@ -162,6 +162,106 @@ function renderDays(monthStr, year, month1to12) {
   return () => loadMonthState(monthStr, dc);
 }
 
+/* --------------------
+   🎉 Toast + Confetti (1000 paket)
+-------------------- */
+function toastTop(msg) {
+  const t = document.createElement("div");
+  t.textContent = msg;
+  t.style.position = "fixed";
+  t.style.left = "50%";
+  t.style.top = "18px";
+  t.style.transform = "translateX(-50%)";
+  t.style.padding = "14px 16px";
+  t.style.borderRadius = "16px";
+  t.style.background = "#16a34a";
+  t.style.color = "#ffffff";
+  t.style.fontWeight = "800";
+  t.style.zIndex = "999999";
+  t.style.boxShadow = "0 10px 30px rgba(0,0,0,.35)";
+  t.style.maxWidth = "92vw";
+  t.style.textAlign = "center";
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+function confettiBurst(durationMs = 1500) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.style.position = "fixed";
+  canvas.style.left = "0";
+  canvas.style.top = "0";
+  canvas.style.width = "100vw";
+  canvas.style.height = "100vh";
+  canvas.style.pointerEvents = "none";
+  canvas.style.zIndex = "999998";
+  document.body.appendChild(canvas);
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener("resize", resize, { passive: true });
+
+  const colors = ["#22c55e", "#60a5fa", "#f59e0b", "#a78bfa", "#ef4444", "#14b8a6"];
+  const pieces = [];
+  const W = () => window.innerWidth;
+  const H = () => window.innerHeight;
+
+  const count = 140;
+  for (let i = 0; i < count; i++) {
+    pieces.push({
+      x: W() / 2 + (Math.random() - 0.5) * 120,
+      y: H() * 0.25 + (Math.random() - 0.5) * 40,
+      vx: (Math.random() - 0.5) * 10,
+      vy: Math.random() * -8 - 3,
+      g: 0.22 + Math.random() * 0.12,
+      r: 2 + Math.random() * 4,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.25,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1
+    });
+  }
+
+  const start = performance.now();
+
+  function frame(now) {
+    const t = now - start;
+    ctx.clearRect(0, 0, W(), H());
+
+    for (const p of pieces) {
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+
+      const life = Math.min(1, t / durationMs);
+      p.alpha = 1 - life;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r, -p.r * 0.6, p.r * 2.2, p.r * 1.2);
+      ctx.restore();
+    }
+
+    if (t < durationMs) {
+      requestAnimationFrame(frame);
+    } else {
+      window.removeEventListener("resize", resize);
+      canvas.remove();
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
 function calculate(getDays, year, month1to12) {
   clearError();
 
@@ -220,6 +320,17 @@ function calculate(getDays, year, month1to12) {
   $("kmSum").textContent = tl(kmSum);
   $("monthlyBonus").textContent = tl(mBonus);
   $("grand").textContent = tl(grand);
+
+  // 🥤🎉 1000 paket easter egg (AY BAŞINA 1 KEZ)
+  const monthKey = $("month")?.value || `${year}-${String(month1to12).padStart(2,"0")}`;
+  const eggKey = `egg_1000_${monthKey}`;
+
+  if (totalPk >= 1000 && !localStorage.getItem(eggKey)) {
+    localStorage.setItem(eggKey, "shown");
+    toastTop("🥤 Ooo 1000 paketi geçmişsin! Yarın sodalar senden 😄");
+    confettiBurst(1500);
+    if (navigator.vibrate) navigator.vibrate([120, 60, 140]);
+  }
 }
 
 // Başlat
@@ -254,6 +365,7 @@ function calculate(getDays, year, month1to12) {
     });
   }
 })();
+
 (function longPressOnCalc(){
   const btn = document.getElementById("calc");
   if (!btn) return;
@@ -285,6 +397,7 @@ function calculate(getDays, year, month1to12) {
   });
   btn.addEventListener("mouseup", () => clearTimeout(pressTimer));
 })();
+
 (function konami(){
   const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
   let i = 0;
@@ -323,6 +436,7 @@ function calculate(getDays, year, month1to12) {
     }
   });
 })();
+
 (function dateEgg(){
   const d = new Date();
   const m = d.getMonth() + 1;
@@ -331,6 +445,7 @@ function calculate(getDays, year, month1to12) {
     console.log("🐣 Bugün gizli mod: 'Bursa Gemlik boost' aktif değil 😄");
   }
 })();
+
 (function easterEggTitleTap(){
   const title = document.getElementById("title");
   if (!title) return;
