@@ -331,3 +331,40 @@ function calculate(getDays, year, month1to12) {
     console.log("🐣 Bugün gizli mod: 'Bursa Gemlik boost' aktif değil 😄");
   }
 })();
+(function easterEggTitleTap(){
+  const title = document.getElementById("title");
+  if (!title) return;
+
+  let taps = 0;
+  let timer = null;
+
+  function toast(msg){
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.position = "fixed";
+    t.style.left = "50%";
+    t.style.bottom = "24px";
+    t.style.transform = "translateX(-50%)";
+    t.style.padding = "12px 14px";
+    t.style.borderRadius = "14px";
+    t.style.background = "#0f172a";
+    t.style.border = "1px solid #334155";
+    t.style.color = "#e5e7eb";
+    t.style.zIndex = "9999";
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 1800);
+  }
+
+  title.addEventListener("click", () => {
+    taps++;
+    clearTimeout(timer);
+    timer = setTimeout(() => taps = 0, 1200);
+
+    if (taps === 7) {
+      taps = 0;
+      toast("🐬 yunusgpt modu aktif: bonuslar çifter yazılmadı 😄");
+      document.body.style.filter = "hue-rotate(25deg)";
+      setTimeout(() => (document.body.style.filter = ""), 1200);
+    }
+  });
+})();
