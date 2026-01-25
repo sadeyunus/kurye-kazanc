@@ -472,13 +472,13 @@ function calculate(getDays, year, month1to12) {
     t.style.color = "#e5e7eb";
     t.style.zIndex = "9999";
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 1800);
+    setTimeout(() => t.remove(), 6000);
   }
 
   title.addEventListener("click", () => {
     taps++;
     clearTimeout(timer);
-    timer = setTimeout(() => taps = 0, 6000);
+    timer = setTimeout(() => taps = 0, 1800);
 
     if (taps === 7) {
       taps = 0;
