@@ -456,6 +456,11 @@ function calculate(getDays, year, month1to12) {
   function toast(msg){
     const t = document.createElement("div");
     t.textContent = msg;
+    t.addEventListener("click", () => t.remove());
+    t.style.fontWeight = "800";
+    t.style.fontSize = "16px";
+    t.style.maxWidth = "90vw";
+    t.style.textAlign = "center";
     t.style.position = "fixed";
     t.style.left = "50%";
     t.style.bottom = "24px";
@@ -477,9 +482,9 @@ function calculate(getDays, year, month1to12) {
 
     if (taps === 7) {
       taps = 0;
-      toast("🐬 yunusgpt modu aktif – paket canavarı 🐺");
+      toast("🐬 yunusgpt modu: Ay sonu bonus takibi açıldı. 1000 pakette sürpriz var 😄");
       document.body.style.filter = "hue-rotate(25deg)";
-      setTimeout(() => (document.body.style.filter = ""), 1200);
+      setTimeout(() => (document.body.style.filter = ""), 6000);
     }
   });
 })();
