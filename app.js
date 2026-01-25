@@ -254,3 +254,80 @@ function calculate(getDays, year, month1to12) {
     });
   }
 })();
+(function longPressOnCalc(){
+  const btn = document.getElementById("calc");
+  if (!btn) return;
+
+  let pressTimer = null;
+
+  function modal(text){
+    alert(text);
+  }
+
+  btn.addEventListener("touchstart", () => {
+    pressTimer = setTimeout(() => {
+      const month = document.getElementById("month")?.value || "-";
+      const pk = document.getElementById("totalPk")?.textContent || "0";
+      const grand = document.getElementById("grand")?.textContent || "-";
+      modal(`🕵️ Gizli Özet\nAy: ${month}\nToplam Paket: ${pk}\nToplam Kazanç: ${grand}`);
+    }, 650);
+  }, { passive:true });
+
+  btn.addEventListener("touchend", () => clearTimeout(pressTimer));
+  btn.addEventListener("touchmove", () => clearTimeout(pressTimer));
+  btn.addEventListener("mousedown", () => {
+    pressTimer = setTimeout(() => {
+      const month = document.getElementById("month")?.value || "-";
+      const pk = document.getElementById("totalPk")?.textContent || "0";
+      const grand = document.getElementById("grand")?.textContent || "-";
+      modal(`🕵️ Gizli Özet\nAy: ${month}\nToplam Paket: ${pk}\nToplam Kazanç: ${grand}`);
+    }, 650);
+  });
+  btn.addEventListener("mouseup", () => clearTimeout(pressTimer));
+})();
+(function konami(){
+  const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+  let i = 0;
+
+  function toast(msg){
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.position = "fixed";
+    t.style.left = "50%";
+    t.style.top = "18px";
+    t.style.transform = "translateX(-50%)";
+    t.style.padding = "10px 12px";
+    t.style.borderRadius = "14px";
+    t.style.background = "#111827";
+    t.style.border = "1px solid #334155";
+    t.style.color = "#e5e7eb";
+    t.style.zIndex = "9999";
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 1800);
+  }
+
+  window.addEventListener("keydown", (e) => {
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    const expected = seq[i];
+
+    if (key === expected) {
+      i++;
+      if (i === seq.length) {
+        i = 0;
+        toast("🎮 KONAMI! 'Bonus Avcısı' rozetini kazandın.");
+        // küçük titreşim (destekleyen cihazlarda)
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+      }
+    } else {
+      i = 0;
+    }
+  });
+})();
+(function dateEgg(){
+  const d = new Date();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  if (m === 1 && day === 26) { // örnek: 26 Ocak
+    console.log("🐣 Bugün gizli mod: 'Bursa Gemlik boost' aktif değil 😄");
+  }
+})();
