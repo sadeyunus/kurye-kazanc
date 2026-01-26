@@ -488,3 +488,24 @@ function calculate(getDays, year, month1to12) {
     }
   });
 })();
+
+// ℹ️ Uygulama Hakkında modal kontrolü (Gizli Özellikler sayfası)
+(function aboutModal(){
+  const btn = document.getElementById("aboutBtn");
+  const modal = document.getElementById("aboutModal");
+  const close = document.getElementById("closeAbout");
+
+  if (!btn || !modal || !close) return;
+
+  btn.addEventListener("click", () => {
+    modal.style.display = "flex";
+  });
+
+  close.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+})();
