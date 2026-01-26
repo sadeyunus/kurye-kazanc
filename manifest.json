@@ -1,6 +1,6 @@
 {
-  "name": "Hesaplama Aracı",
-  "short_name": "Hesapla",
+  "name": "Kazanç Hesaplama Aracı",
+  "short_name": "Hesaplayıcı",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0b1220",
