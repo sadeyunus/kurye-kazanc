@@ -28,11 +28,61 @@
     .summary { margin-top:12px; padding:12px; border-radius:14px; background:#0f172a; border:1px dashed #334155; }
     .summary .k { color:#94a3b8; }
     .err { color:#fca5a5; margin-top:10px; }
+
+    /* About button */
+    .about-btn{
+      background:#0f172a;
+      color:#94a3b8;
+      border:1px solid #334155;
+      border-radius:10px;
+      padding:6px 10px;
+      font-size:13px;
+      margin:8px 0 10px;
+      width:auto;
+    }
+    .about-btn:hover{ filter: brightness(1.08); }
+
+    /* About modal */
+    #aboutModal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.6);
+      z-index:999999;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    #aboutCard{
+      background:#0f172a;
+      border:1px solid #334155;
+      border-radius:16px;
+      padding:16px;
+      max-width:520px;
+      width:100%;
+      color:#e5e7eb;
+    }
+    #aboutCard h3{ margin:0 0 8px; }
+    #aboutCard p{ margin:8px 0; }
+    #aboutCard ul{ margin:10px 0 0; padding-left:18px; }
+    #closeAbout{
+      margin-top:12px;
+      background:#22c55e;
+      border:0;
+      border-radius:10px;
+      padding:10px 12px;
+      font-weight:800;
+      width:100%;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h2 id="title">Kurye Kazanç Hesaplayıcı (PWA)</h2>
+
+    <!-- ℹ️ About button -->
+    <button id="aboutBtn" class="about-btn">ℹ️ Uygulama Hakkında</button>
 
     <div class="card">
       <div class="row">
@@ -76,6 +126,26 @@
     </div>
 
     <p class="muted">Kurulum: Tarayıcı menüsü → “Ana ekrana ekle”. (HTTPS gerekir)</p>
+  </div>
+
+  <!-- About Modal -->
+  <div id="aboutModal">
+    <div id="aboutCard">
+      <h3>ℹ️ Uygulama Hakkında</h3>
+      <p style="color:#94a3b8;font-size:14px;">
+        Kurye kazancını (sabit + günlük prim + aylık bonus) hesaplamak için yapılmıştır.
+      </p>
+
+      <p style="margin-top:12px; font-weight:800;">👀 Gizli Özellikler</p>
+      <ul style="font-size:14px;line-height:1.6;">
+        <li>🐬 <b>yunusgpt modu</b> → Başlığa hızlıca <b>7 kez</b> dokun</li>
+        <li>🕵️ <b>Gizli Özet</b> → <b>Hesapla</b> butonuna <b>basılı tut</b></li>
+        <li>🎮 <b>Bonus Avcısı</b> → Klavyeden <b>↑↑↓↓←→←→BA</b></li>
+        <li>🥤🎉 <b>1000 Paket Kutlaması</b> → Aylık toplam paket <b>1000+</b> olunca mesaj + konfeti (ayda 1 kez)</li>
+      </ul>
+
+      <button id="closeAbout">Kapat</button>
+    </div>
   </div>
 
   <script src="app.js?v=20260126a"></script>
