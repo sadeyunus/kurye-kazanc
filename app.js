@@ -73,7 +73,6 @@ function loadMonthState(monthStr, dayCount) {
   }
   try {
     const arr = JSON.parse(raw);
-    // Gün sayısı değişmişse (28/30/31) uzat/kısalt
     const out = Array.from({ length: dayCount }, (_, i) => arr[i] ?? ({ t: "work", pk: "", km: "0" }));
     return out;
   } catch {
@@ -130,7 +129,6 @@ function renderDays(monthStr, year, month1to12) {
     const kmWrap = row.querySelector(".c3");
     const kmSel = row.querySelector('select[data-k="km"]');
 
-    // yükle
     tSel.value = d.t ?? "work";
     pkInp.value = d.pk ?? "";
     kmSel.value = d.km ?? "0";
@@ -138,7 +136,8 @@ function renderDays(monthStr, year, month1to12) {
     function applyEnabled() {
       const isWork = tSel.value === "work";
       pkInp.disabled = !isWork;
-      if (!isWork) pkInp.value = ""; // izin/ücretsiz gün paketi sıfırla
+      if (!isWork) pkInp.value = "";
+
       const kmOn = $("kmMode").value === "on";
       kmWrap.style.display = kmOn ? "block" : "none";
       kmSel.disabled = !(kmOn && isWork);
@@ -158,7 +157,6 @@ function renderDays(monthStr, year, month1to12) {
     container.appendChild(row);
   });
 
-  // Hesapla butonu için gün verisini geri döndür
   return () => loadMonthState(monthStr, dc);
 }
 
@@ -300,10 +298,9 @@ function calculate(getDays, year, month1to12) {
       }
     } else if (d.t === "off") {
       offDays++;
-      fixedSum += fixedDaily; // izin günü sabit var
+      fixedSum += fixedDaily;
     } else {
       unpaidDays++;
-      // hiçbir şey yok
     }
   }
 
@@ -333,9 +330,155 @@ function calculate(getDays, year, month1to12) {
   }
 }
 
+/* --------------------
+   🧭 Wizard (Adım adım gün giriş) + KM desteği
+-------------------- */
+function wizardSetup() {
+  const startBtn = $("startWizard");
+  const wiz = $("wizard");
+  const title = $("wizTitle");
+  const progress = $("wizProgress");
+  const status = $("wizStatus");
+  const pk = $("wizPk");
+  const prev = $("wizPrev");
+  const next = $("wizNext");
+  const finish = $("wizFinish");
+  const daysList = $("days");
+
+  if (!startBtn || !wiz || !title || !progress || !status || !pk || !prev || !next || !finish) return;
+
+  // wizKm yoksa otomatik ekle
+  let kmSel = $("wizKm");
+  if (!kmSel) {
+    const kmLabel = document.createElement("label");
+    kmLabel.textContent = "KM desteği";
+    kmLabel.style.marginTop = "10px";
+
+    kmSel = document.createElement("select");
+    kmSel.id = "wizKm";
+    kmSel.innerHTML = `
+      <option value="0">0</option>
+      <option value="25">25</option>
+      <option value="35">35</option>
+    `;
+
+    // pk input’un hemen altına ekle
+    const pkParent = pk.parentElement;
+    pkParent.insertBefore(kmLabel, pk.nextSibling);
+    pkParent.insertBefore(kmSel, kmLabel.nextSibling);
+  }
+
+  let idx = 0;
+  let dc = 0;
+  let monthStr = "";
+  let y = 0, m = 0;
+  let daysArr = [];
+
+  function loadMonth() {
+    const parts = $("month").value.split("-");
+    y = Number(parts[0]); m = Number(parts[1]);
+    dc = daysInMonth(y, m);
+    monthStr = $("month").value;
+    daysArr = loadMonthState(monthStr, dc);
+  }
+
+  function applyEnabled() {
+    const isWork = status.value === "work";
+    pk.disabled = !isWork;
+    if (!isWork) pk.value = "";
+
+    const kmOn = $("kmMode").value === "on";
+    kmSel.disabled = !(isWork && kmOn);
+    kmSel.style.display = kmOn ? "block" : "none";
+    // label da gizlensin
+    if (kmSel.previousSibling && kmSel.previousSibling.tagName === "LABEL") {
+      kmSel.previousSibling.style.display = kmOn ? "block" : "none";
+    }
+    if (!(isWork && kmOn)) kmSel.value = "0";
+  }
+
+  function saveCurrent() {
+    if (!daysArr[idx]) daysArr[idx] = { t: "work", pk: "", km: "0" };
+    daysArr[idx].t = status.value;
+
+    if (status.value === "work") {
+      daysArr[idx].pk = pk.value;
+      // km sadece kmMode açıkken anlamlı
+      const kmOn = $("kmMode").value === "on";
+      daysArr[idx].km = kmOn ? kmSel.value : "0";
+    } else {
+      daysArr[idx].pk = "";
+      daysArr[idx].km = "0";
+    }
+
+    saveMonthState(monthStr, daysArr);
+  }
+
+  function render() {
+    title.textContent = `Gün ${idx + 1}`;
+    progress.textContent = `${idx + 1}/${dc}`;
+
+    const d = daysArr[idx] ?? { t: "work", pk: "", km: "0" };
+    status.value = d.t ?? "work";
+    pk.value = d.pk ?? "";
+    kmSel.value = d.km ?? "0";
+
+    applyEnabled();
+
+    prev.disabled = idx === 0;
+
+    const last = idx === dc - 1;
+    next.style.display = last ? "none" : "block";
+    finish.style.display = last ? "block" : "none";
+  }
+
+  function openWizard() {
+    loadMonth();
+    idx = 0;
+    wiz.style.display = "block";
+    if (daysList) daysList.style.display = "none";
+    render();
+    pk.focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function closeWizard() {
+    wiz.style.display = "none";
+    if (daysList) daysList.style.display = "flex";
+  }
+
+  status.addEventListener("change", () => applyEnabled());
+  $("kmMode")?.addEventListener("change", () => applyEnabled());
+
+  prev.addEventListener("click", () => {
+    saveCurrent();
+    if (idx > 0) idx--;
+    render();
+  });
+
+  next.addEventListener("click", () => {
+    saveCurrent();
+    if (idx < dc - 1) idx++;
+    render();
+  });
+
+  finish.addEventListener("click", () => {
+    saveCurrent();
+    calculate(() => loadMonthState(monthStr, dc), y, m);
+    closeWizard();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  startBtn.addEventListener("click", openWizard);
+
+  // Ay değişince wizard açıksa ayın verisini yeniden yükle
+  $("month")?.addEventListener("change", () => {
+    if (wiz.style.display === "block") openWizard();
+  });
+}
+
 // Başlat
 (function init(){
-  // defaults
   $("fixedMonthly").value = "55223";
   $("month").value = defaultMonth();
 
@@ -357,8 +500,8 @@ function calculate(getDays, year, month1to12) {
   });
 
   refresh();
+  wizardSetup();
 
-  // SW
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try { await navigator.serviceWorker.register("./sw.js"); } catch {}
@@ -428,7 +571,6 @@ function calculate(getDays, year, month1to12) {
       if (i === seq.length) {
         i = 0;
         toast("🎮 KONAMI! 'Bonus Avcısı' rozetini kazandın.");
-        // küçük titreşim (destekleyen cihazlarda)
         if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
       }
     } else {
@@ -441,7 +583,7 @@ function calculate(getDays, year, month1to12) {
   const d = new Date();
   const m = d.getMonth() + 1;
   const day = d.getDate();
-  if (m === 1 && day === 26) { // örnek: 26 Ocak
+  if (m === 1 && day === 26) {
     console.log("🐣 Bugün gizli mod: 'Bursa Gemlik boost' aktif değil 😄");
   }
 })();
@@ -489,7 +631,7 @@ function calculate(getDays, year, month1to12) {
   });
 })();
 
-// ℹ️ Uygulama Hakkında modal kontrolü (Gizli Özellikler sayfası)
+// ℹ️ Uygulama Hakkında modal kontrolü
 (function aboutModal(){
   const btn = document.getElementById("aboutBtn");
   const modal = document.getElementById("aboutModal");
