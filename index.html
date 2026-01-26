@@ -75,6 +75,32 @@
       width:100%;
       cursor:pointer;
     }
+
+    /* Wizard */
+    #startWizard{
+      background:#2563eb;
+      margin-top:0;
+    }
+    #wizard{
+      display:none;
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      background:#0f172a;
+      border:1px solid #233046;
+    }
+    #wizHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    #wizProgress{ color:#94a3b8; font-size:12px; }
+    #wizBtns{ display:flex; gap:10px; margin-top:12px; }
+    #wizPrev{ background:#334155; }
+    #wizNext{ background:#22c55e; }
+    #wizFinish{ display:none; background:#22c55e; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -106,6 +132,36 @@
         </div>
       </div>
 
+      <!-- Wizard start -->
+      <button id="startWizard">Hesaplamaya Başla</button>
+
+      <!-- Wizard stepper -->
+      <div id="wizard">
+        <div id="wizHeader">
+          <b id="wizTitle">Gün</b>
+          <span id="wizProgress">0/0</span>
+        </div>
+
+        <label>Durum</label>
+        <select id="wizStatus">
+          <option value="work">Çalıştım</option>
+          <option value="off">Haftalık izin</option>
+          <option value="unpaid">Çalışmadım (ücretsiz)</option>
+        </select>
+
+        <label>Paket sayısı</label>
+        <input id="wizPk" inputmode="numeric" placeholder="örn: 42" />
+
+        <div id="wizBtns">
+          <button id="wizPrev">Önceki</button>
+          <button id="wizNext">Sonraki</button>
+        </div>
+
+        <button id="wizFinish">Bitir ve Hesapla</button>
+
+        <div class="muted">İpucu: Çalışmadıysan/izinsen paket girmen gerekmez.</div>
+      </div>
+
       <button id="calc">Hesapla</button>
       <div id="error" class="err" style="display:none;"></div>
 
@@ -121,6 +177,7 @@
         <div style="font-size:18px;"><span class="k">GENEL TOPLAM:</span> <b id="grand">-</b></div>
       </div>
 
+      <!-- Day list (hidden while wizard is open) -->
       <div class="grid" id="days"></div>
       <div class="muted">Not: “İzin” günü sabit ücret var, paket primi yok. Offline çalışır, otomatik kaydeder.</div>
     </div>
