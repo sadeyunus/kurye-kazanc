@@ -77,15 +77,12 @@
     }
 
     /* Wizard */
-    #startWizard{
-      background:#2563eb;
-      margin-top:0;
-    }
+    #startWizard{ background:#2563eb; margin-top:0; }
     #wizard{
       display:none;
       margin-top:12px;
-      padding:12px;
-      border-radius:14px;
+      padding:14px;
+      border-radius:16px;
       background:#0f172a;
       border:1px solid #233046;
     }
@@ -94,20 +91,36 @@
       justify-content:space-between;
       align-items:center;
       gap:10px;
-      margin-bottom:6px;
+      margin-bottom:12px;
     }
-    #wizProgress{ color:#94a3b8; font-size:12px; }
-    #wizBtns{ display:flex; gap:10px; margin-top:12px; }
+    #wizTitle{ font-size:18px; }
+    #wizProgress{ font-size:13px; color:#94a3b8; }
+    #wizBtns{ display:flex; gap:12px; margin-top:16px; }
+    #wizPrev, #wizNext{
+      flex:1;
+      height:48px;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:800;
+    }
     #wizPrev{ background:#334155; }
     #wizNext{ background:#22c55e; }
-    #wizFinish{ display:none; background:#22c55e; margin-top:10px; }
+    #wizFinish{
+      display:none;
+      width:100%;
+      height:48px;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:800;
+      background:#22c55e;
+      margin-top:10px;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h2 id="title">Kurye Kazanç Hesaplayıcı (PWA)</h2>
 
-    <!-- ℹ️ About button -->
     <button id="aboutBtn" class="about-btn">ℹ️ Uygulama Hakkında</button>
 
     <div class="card">
@@ -115,27 +128,33 @@
         <div>
           <label>Ay</label>
           <input id="month" type="month" />
-          <div class="muted">Ay seçince gün listesi otomatik oluşur.</div>
+          <div class="muted">Ay seçince kayıtlı verilerin gelir. Wizard ile gün gün gir.</div>
         </div>
+
         <div>
-          <label>Aylık Sabit Ücret (TL)</label>
-          <input id="fixedMonthly" inputmode="decimal" />
-          <div class="muted">Varsayılan: 55.223</div>
+          <label>Saatlik Sabit Ücret (TL)</label>
+          <input id="hourlyRate" value="177" disabled />
+          <div class="muted">Sabit: 177 TL/saat</div>
         </div>
+
+        <div>
+          <label>Aylık Toplam Online Süre (saat)</label>
+          <input id="monthHours" inputmode="decimal" placeholder="örn: 208.5" />
+          <div class="muted">Doluysa sabit hakediş buradan hesaplanır. Boşsa günlük saatler toplanır.</div>
+        </div>
+
         <div>
           <label>KM Desteği (opsiyonel)</label>
           <select id="kmMode">
             <option value="off">Kapalı</option>
             <option value="on">Açık (günlük gir)</option>
           </select>
-          <div class="muted">İstersen her güne 0 / 25 / 35 ekletiriz.</div>
+          <div class="muted">Çalışılan günlerde 0 / 25 / 35</div>
         </div>
       </div>
 
-      <!-- Wizard start -->
       <button id="startWizard">Hesaplamaya Başla</button>
 
-      <!-- Wizard stepper -->
       <div id="wizard">
         <div id="wizHeader">
           <b id="wizTitle">Gün</b>
@@ -149,8 +168,18 @@
           <option value="unpaid">Çalışmadım (ücretsiz)</option>
         </select>
 
+        <label>Online süre (saat)</label>
+        <input id="wizHours" inputmode="decimal" placeholder="örn: 7.8" />
+
         <label>Paket sayısı</label>
         <input id="wizPk" inputmode="numeric" placeholder="örn: 42" />
+
+        <label id="wizKmLabel" style="display:none;">KM desteği</label>
+        <select id="wizKm" style="display:none;">
+          <option value="0">0</option>
+          <option value="25">25</option>
+          <option value="35">35</option>
+        </select>
 
         <div id="wizBtns">
           <button id="wizPrev">Önceki</button>
@@ -159,7 +188,7 @@
 
         <button id="wizFinish">Bitir ve Hesapla</button>
 
-        <div class="muted">İpucu: Çalışmadıysan/izinsen paket girmen gerekmez.</div>
+        <div class="muted">İpucu: Çalışmadıysan/izinsen saat/paket/km girmen gerekmez.</div>
       </div>
 
       <button id="calc">Hesapla</button>
@@ -167,9 +196,9 @@
 
       <div class="summary">
         <div><span class="k">Çalışılan gün:</span> <b id="workDays">0</b> — <span class="k">İzin:</span> <b id="offDays">0</b> — <span class="k">Ücretsiz:</span> <b id="unpaidDays">0</b></div>
-        <div><span class="k">Toplam paket:</span> <b id="totalPk">0</b></div>
+        <div><span class="k">Toplam paket:</span> <b id="totalPk">0</b> — <span class="k">Toplam saat:</span> <b id="totalHours">0</b></div>
         <hr style="border:0;border-top:1px solid #233046; margin:10px 0;">
-        <div><span class="k">Sabit toplam:</span> <b id="fixedSum">-</b></div>
+        <div><span class="k">Sabit (saatlik) toplam:</span> <b id="fixedSum">-</b></div>
         <div><span class="k">Günlük paket primi:</span> <b id="dailyBonusSum">-</b></div>
         <div><span class="k">KM desteği:</span> <b id="kmSum">-</b></div>
         <div><span class="k">Aylık bonus:</span> <b id="monthlyBonus">-</b></div>
@@ -177,22 +206,19 @@
         <div style="font-size:18px;"><span class="k">GENEL TOPLAM:</span> <b id="grand">-</b></div>
       </div>
 
-      <!-- Day list (hidden while wizard is open) -->
       <div class="grid" id="days"></div>
-      <div class="muted">Not: “İzin” günü sabit ücret var, paket primi yok. Offline çalışır, otomatik kaydeder.</div>
+      <div class="muted">Not: Wizard açıkken liste gizlenir. Veriler otomatik kaydolur.</div>
     </div>
 
-    <p class="muted">Kurulum: Tarayıcı menüsü → “Ana ekrana ekle”. (HTTPS gerekir)</p>
+    <p class="muted">Kurulum: Tarayıcı menüsü → “Ana ekrana ekle”.</p>
   </div>
 
-  <!-- About Modal -->
   <div id="aboutModal">
     <div id="aboutCard">
       <h3>ℹ️ Uygulama Hakkında</h3>
       <p style="color:#94a3b8;font-size:14px;">
-        Kurye kazancını (sabit + günlük prim + aylık bonus) hesaplamak için yapılmıştır.
+        Kurye kazancını (sabit saatlik + günlük prim + aylık bonus) hesaplamak için yapılmıştır.
       </p>
-
       <p style="margin-top:12px; font-weight:800;">👀 Gizli Özellikler</p>
       <ul style="font-size:14px;line-height:1.6;">
         <li>🐬 <b>yunusgpt modu</b> → Başlığa hızlıca <b>7 kez</b> dokun</li>
@@ -200,11 +226,10 @@
         <li>🎮 <b>Bonus Avcısı</b> → Klavyeden <b>↑↑↓↓←→←→BA</b></li>
         <li>🥤🎉 <b>1000 Paket Kutlaması</b> → Aylık toplam paket <b>1000+</b> olunca mesaj + konfeti (ayda 1 kez)</li>
       </ul>
-
       <button id="closeAbout">Kapat</button>
     </div>
   </div>
 
-  <script src="app.js?v=20260126a"></script>
+  <script src="app.js?v=20260126b"></script>
 </body>
 </html>
