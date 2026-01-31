@@ -1,10 +1,4 @@
-function hasMonthlyHours() {
-  const mh = parseTrNumber(document.getElementById("monthHours")?.value);
-  return Number.isFinite(mh) && mh > 0;
-}
-
 const HOURLY_RATE = 177; // TL/saat
-
 const $ = (id) => document.getElementById(id);
 
 function parseTrNumber(s) {
@@ -55,17 +49,20 @@ function monthlyBonus(totalPk) {
 
 function showError(msg) {
   const el = $("error");
+  if (!el) return;
   el.textContent = msg;
   el.style.display = "block";
 }
 function clearError() {
   const el = $("error");
+  if (!el) return;
   el.textContent = "";
   el.style.display = "none";
 }
 
 function stateKey(monthStr){ return `kurye_calc_${monthStr}`; }
 function hoursKey(monthStr){ return `kurye_hours_${monthStr}`; }
+function hourModeKey(monthStr){ return `kurye_hourmode_${monthStr}`; }
 
 function defaultMonth() {
   const d = new Date();
@@ -91,6 +88,108 @@ function saveMonthState(monthStr, daysArr) {
   localStorage.setItem(stateKey(monthStr), JSON.stringify(daysArr));
 }
 
+/* --------------------
+   Saat modu (toggle) – JS kendisi UI ekler
+   hourMode: "monthly" | "daily"
+-------------------- */
+function getMonthStrSafe() {
+  return $("month")?.value || defaultMonth();
+}
+
+function getHourMode(monthStr) {
+  const saved = localStorage.getItem(hourModeKey(monthStr));
+  return (saved === "daily" || saved === "monthly") ? saved : "daily"; // varsayılan: günlük
+}
+
+function setHourMode(monthStr, mode) {
+  localStorage.setItem(hourModeKey(monthStr), mode);
+}
+
+function mountHourModeToggle() {
+  const monthHours = $("monthHours");
+  if (!monthHours) return;
+
+  // Zaten ekliysek tekrar ekleme
+  if ($("hourMode")) return;
+
+  const wrap = document.createElement("div");
+  wrap.style.marginTop = "8px";
+
+  const label = document.createElement("label");
+  label.textContent = "Saat modu";
+  label.style.margin = "0 0 6px";
+  label.style.color = "#cbd5e1";
+  label.style.fontSize = "14px";
+  label.style.display = "block";
+
+  const sel = document.createElement("select");
+  sel.id = "hourMode";
+  sel.innerHTML = `
+    <option value="daily">Günlük saat (wizard)</option>
+    <option value="monthly">Aylık toplam saat</option>
+  `;
+
+  const hint = document.createElement("div");
+  hint.id = "hourModeHint";
+  hint.style.color = "#94a3b8";
+  hint.style.fontSize = "12px";
+  hint.style.marginTop = "6px";
+
+  wrap.appendChild(label);
+  wrap.appendChild(sel);
+  wrap.appendChild(hint);
+
+  // monthHours'ın hemen altına yerleştir
+  monthHours.insertAdjacentElement("afterend", wrap);
+
+  function applyHourModeUI() {
+    const ms = getMonthStrSafe();
+    const mode = sel.value;
+
+    // Kaydet
+    setHourMode(ms, mode);
+
+    // Aylık saat kutusunu aç/kapat
+    if (mode === "monthly") {
+      monthHours.disabled = false;
+      hint.textContent = "Aylık toplam saat kullanılacak. Günlük saat kutuları kapalı.";
+    } else {
+      // daily
+      monthHours.disabled = true;
+      hint.textContent = "Günlük saatler (wizard) toplanacak. Aylık saat kapalı.";
+    }
+
+    // Wizard açıksa anında güncelle
+    $("wizStatus")?.dispatchEvent(new Event("change"));
+  }
+
+  // Ay değişince mod / aylık saat alanını geri yükle
+  function syncFromStorage() {
+    const ms = getMonthStrSafe();
+    const mode = getHourMode(ms);
+    sel.value = mode;
+
+    const storedHours = localStorage.getItem(hoursKey(ms));
+    if (storedHours != null && monthHours) monthHours.value = storedHours;
+    if (mode === "daily") monthHours.disabled = true;
+    else monthHours.disabled = false;
+
+    // Wizard açıksa refresh
+    $("wizStatus")?.dispatchEvent(new Event("change"));
+  }
+
+  sel.addEventListener("change", applyHourModeUI);
+
+  // İlk kurulumda ay bazlı mode’u yükle
+  syncFromStorage();
+
+  // Dışarıdan çağırabilelim
+  return { applyHourModeUI, syncFromStorage };
+}
+
+/* --------------------
+   Toast + Confetti
+-------------------- */
 function toastTop(msg) {
   const t = document.createElement("div");
   t.textContent = msg;
@@ -185,7 +284,7 @@ function confettiBurst(durationMs = 1500) {
 }
 
 /* --------------------
-   Liste görünümü (istersen kullan)
+   Liste görünümü (istersen)
 -------------------- */
 function renderDays(monthStr, year, month1to12) {
   const dc = daysInMonth(year, month1to12);
@@ -244,9 +343,15 @@ function renderDays(monthStr, year, month1to12) {
 
     function applyEnabled() {
       const isWork = tSel.value === "work";
-      hInp.disabled = !isWork;
+
+      const mode = getHourMode(monthStr);
+      const dailyMode = (mode === "daily");
+
+      hInp.disabled = !isWork || !dailyMode;
       pkInp.disabled = !isWork;
+
       if (!isWork) { hInp.value = ""; pkInp.value = ""; }
+      if (!dailyMode) { hInp.value = ""; } // aylık modda günlük saat temiz
 
       const kmOn = $("kmMode")?.value === "on";
       kmWrap.style.display = kmOn ? "block" : "none";
@@ -280,12 +385,12 @@ function calculate(getDays, year, month1to12) {
   const monthStr = $("month")?.value || `${year}-${String(month1to12).padStart(2,"0")}`;
   const daysArr = getDays();
 
+  const mode = getHourMode(monthStr); // "monthly" | "daily"
   const monthHours = parseTrNumber($("monthHours")?.value);
-  const useMonthlyHours = Number.isFinite(monthHours) && monthHours > 0;
 
   let workDays = 0, offDays = 0, unpaidDays = 0;
   let totalPk = 0;
-  let totalHours = 0;
+  let totalHoursDaily = 0;
 
   let fixedSum = 0;
   let dailyBonusSum = 0;
@@ -306,7 +411,7 @@ function calculate(getDays, year, month1to12) {
 
     const h = parseTrNumber(d.h);
     const hVal = (d.t === "work" && Number.isFinite(h) && h >= 0) ? h : 0;
-    totalHours += hVal;
+    totalHoursDaily += hVal;
 
     if (kmOn && d.t === "work") {
       const km = parseTrNumber(d.km);
@@ -314,8 +419,18 @@ function calculate(getDays, year, month1to12) {
     }
   }
 
-  // Sabit hakediş:
-  fixedSum = (useMonthlyHours ? monthHours : totalHours) * HOURLY_RATE;
+  // Sabit hakediş (mode’a göre)
+  let usedHours = 0;
+  if (mode === "monthly") {
+    if (!Number.isFinite(monthHours) || monthHours <= 0) {
+      return showError("Saat modu 'Aylık toplam saat' seçili. Lütfen aylık toplam saat gir.");
+    }
+    usedHours = monthHours;
+  } else {
+    usedHours = totalHoursDaily;
+  }
+
+  fixedSum = usedHours * HOURLY_RATE;
 
   const mBonus = monthlyBonus(totalPk);
   const grand = fixedSum + dailyBonusSum + kmSum + mBonus;
@@ -324,7 +439,7 @@ function calculate(getDays, year, month1to12) {
   $("offDays").textContent = offDays;
   $("unpaidDays").textContent = unpaidDays;
   $("totalPk").textContent = totalPk;
-  $("totalHours").textContent = (useMonthlyHours ? monthHours : totalHours).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+  $("totalHours").textContent = usedHours.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
 
   $("fixedSum").textContent = tl(fixedSum);
   $("dailyBonusSum").textContent = tl(dailyBonusSum);
@@ -375,24 +490,46 @@ function wizardSetup() {
 
   function applyEnabled() {
     const isWork = status.value === "work";
-    hours.disabled = !isWork;
+    const mode = getHourMode(monthStr || getMonthStrSafe());
+    const dailyMode = (mode === "daily");
+
+    hours.disabled = !isWork || !dailyMode;
     pk.disabled = !isWork;
     if (!isWork) { hours.value = ""; pk.value = ""; }
+    if (!dailyMode) { hours.value = ""; } // aylık modda günlük saat temiz
 
     const kmOn = $("kmMode").value === "on";
     kmLabel.style.display = kmOn ? "block" : "none";
     kmSel.style.display = kmOn ? "block" : "none";
     kmSel.disabled = !(kmOn && isWork);
     if (!(kmOn && isWork)) kmSel.value = "0";
+
+    // info
+    let info = $("wizHoursInfo");
+    if (!info) {
+      info = document.createElement("div");
+      info.id = "wizHoursInfo";
+      info.style.marginTop = "6px";
+      info.style.fontSize = "12px";
+      info.style.color = "#94a3b8";
+      hours.insertAdjacentElement("afterend", info);
+    }
+    info.textContent = dailyMode
+      ? "Günlük saat gir (örn: 7.8)."
+      : "Saat modu 'Aylık toplam saat' → günlük saat kapalı.";
   }
 
   function saveCurrent() {
     if (!daysArr[idx]) daysArr[idx] = { t: "work", h: "", pk: "", km: "0" };
     daysArr[idx].t = status.value;
 
+    const mode = getHourMode(monthStr);
+    const dailyMode = (mode === "daily");
+
     if (status.value === "work") {
-      daysArr[idx].h = hours.value;
+      daysArr[idx].h = dailyMode ? hours.value : "";
       daysArr[idx].pk = pk.value;
+
       const kmOn = $("kmMode").value === "on";
       daysArr[idx].km = kmOn ? kmSel.value : "0";
     } else {
@@ -450,10 +587,13 @@ function wizardSetup() {
     closeWizard();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
+
+  // dışarıdan toggle değişince wizard açıkken yenilensin
+  window.__wizardApplyEnabled = applyEnabled;
 }
 
 /* --------------------
-   About modal + Easter eggs
+   About modal + Easter eggs (dokunmadım)
 -------------------- */
 (function aboutModal(){
   const btn = document.getElementById("aboutBtn");
@@ -562,27 +702,50 @@ function wizardSetup() {
    Init
 -------------------- */
 (function init(){
-  // UI defaults
+  // defaults
   if ($("hourlyRate")) $("hourlyRate").value = String(HOURLY_RATE);
   $("month").value = defaultMonth();
 
-  // load monthHours from storage
-  const monthStr = $("month").value;
-  const savedHours = localStorage.getItem(hoursKey(monthStr));
-  if (savedHours != null) $("monthHours").value = savedHours;
+  // mount toggle UI
+  const toggleAPI = mountHourModeToggle();
 
-  $("month").addEventListener("change", () => {
-    const ms = $("month").value;
-    const sh = localStorage.getItem(hoursKey(ms));
-    $("monthHours").value = sh ?? "";
+  // load monthHours from storage for current month
+  const ms0 = getMonthStrSafe();
+  const savedHours = localStorage.getItem(hoursKey(ms0));
+  if (savedHours != null && $("monthHours")) $("monthHours").value = savedHours;
+
+  // monthHours save
+  $("monthHours")?.addEventListener("input", () => {
+    const ms = getMonthStrSafe();
+    localStorage.setItem(hoursKey(ms), $("monthHours").value);
+    // monthly saat yazınca wizard varsa UI güncellensin
+    window.__wizardApplyEnabled?.();
   });
 
-  $("monthHours").addEventListener("input", () => {
-    const ms = $("month").value;
-    localStorage.setItem(hoursKey(ms), $("monthHours").value);
+  // month change
+  $("month")?.addEventListener("change", () => {
+    const ms = getMonthStrSafe();
+
+    // restore hour mode and monthHours
+    const storedMode = getHourMode(ms);
+    const hm = $("hourMode");
+    if (hm) hm.value = storedMode;
+
+    const sh = localStorage.getItem(hoursKey(ms));
+    if ($("monthHours")) $("monthHours").value = sh ?? "";
+
+    // apply UI
+    if (storedMode === "daily") $("monthHours").disabled = true;
+    else $("monthHours").disabled = false;
+
+    toggleAPI?.syncFromStorage?.();
+
+    refresh();
+    window.__wizardApplyEnabled?.();
   });
 
   let getDays = () => [];
+
   function refresh() {
     const [yStr, mStr] = $("month").value.split("-");
     const y = Number(yStr), m = Number(mStr);
@@ -591,16 +754,21 @@ function wizardSetup() {
     getDays = renderDays(ms, y, m);
   }
 
-  $("kmMode").addEventListener("change", refresh);
-  $("month").addEventListener("change", refresh);
+  $("kmMode")?.addEventListener("change", refresh);
 
-  $("calc").addEventListener("click", () => {
+  $("calc")?.addEventListener("click", () => {
     const [yStr, mStr] = $("month").value.split("-");
     calculate(getDays, Number(yStr), Number(mStr));
   });
 
   refresh();
   wizardSetup();
+
+  // toggle değişince liste + wizard’ı da güncelle
+  $("hourMode")?.addEventListener("change", () => {
+    refresh();
+    window.__wizardApplyEnabled?.();
+  });
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
