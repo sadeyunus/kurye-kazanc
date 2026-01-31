@@ -1,3 +1,8 @@
+function hasMonthlyHours() {
+  const mh = parseTrNumber(document.getElementById("monthHours")?.value);
+  return Number.isFinite(mh) && mh > 0;
+}
+
 const HOURLY_RATE = 177; // TL/saat
 
 const $ = (id) => document.getElementById(id);
